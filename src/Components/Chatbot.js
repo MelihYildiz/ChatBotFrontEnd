@@ -1,34 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import ChatInput from './ChatInput';
+import { convertToAscii } from '../Services/asciiService';
 
 const Container = styled.div`
   display: flex;
-  justify-content: flex-start; /* Login ve Chatbot bileşenlerini yan yana hizalamak için */
-  padding: 20px; /* İsteğe bağlı kenar boşlukları */
-  height: 100vh; /* Tüm ekranı kaplaması için */
-`;
-
-const LoginContainer = styled.div`
-  flex: 1; /* Kutuyu sola kadar genişletmek için */
-  padding: 20px;
-  height: 860px;
-  border: 3px solid #ccc;
-  border-radius: 5px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
-  margin-right: 20px; /* ChatbotContainer'dan ayırmak için kenar boşluğu */
-`;
-
-const Logo = styled.img`
-  width: 180px; /* Logonun genişliği, isteğe göre ayarlayabilirsiniz */
-  margin-bottom: 20px; /* Logonun altına boşluk eklemek için */
+  padding: 20px;
+  height: 100vh;
 `;
 
 const ChatbotContainer = styled.div`
-  width: 1600px;
+  width: 1200px;
   height: 900px;
   border: 3px solid #ccc;
   border-radius: 5px;
@@ -41,8 +25,8 @@ const Header = styled.h1`
   text-align: left;
   margin: 0;
   padding: 20px;
-  background-color: #00FFFF; 
-  color: red; 
+  background-color: #00FFFF;
+  color: red;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
 `;
@@ -61,52 +45,30 @@ const Message = styled.div`
   border-radius: 5px;
 `;
 
-const Input = styled.input`
-  margin-bottom: 10px;
-  padding: 10px;
-  width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-`;
-
-const Button = styled.button`
-  padding: 10px;
-  width: 100%;
-  background-color: #007BFF;
-  border: none;
-  border-radius: 5px;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #00CCCC;
-  }
-`;
-
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSendMessage = (message) => {
+    // Kullanıcı mesajını ekle (orijinal haliyle)
     setMessages([...messages, { text: message, isUser: true }]);
-    // Mock response
+
+    // Kullanıcı mesajını ASCII formatına çevirip bot cevabı olarak ekle
     setTimeout(() => {
+      const asciiMessage = convertToAscii(message);
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: '--Botu bağladığımızda cevap verecek.--', isUser: false },
+        { text: asciiMessage, isUser: false },
       ]);
     }, 1000);
   };
 
   return (
     <Container>
-      <LoginContainer>
-        <Logo src="digiturklogo.png" alt="Logo" />
-        <h1>Login</h1>
-        <Input type="text" placeholder="Username" />
-        <Input type="password" placeholder="Password" />
-        <Button>Login</Button>
-      </LoginContainer>
       <ChatbotContainer>
         <Header>ChatBot</Header>
         <ChatLog>
@@ -115,6 +77,7 @@ const Chatbot = () => {
               {message.text}
             </Message>
           ))}
+          <div ref={chatEndRef} /> {/* Bu div, en son mesajın altında kalır */}
         </ChatLog>
         <ChatInput onSendMessage={handleSendMessage} />
       </ChatbotContainer>

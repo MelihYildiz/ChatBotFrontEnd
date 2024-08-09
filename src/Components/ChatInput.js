@@ -29,7 +29,7 @@ const ChatInput = ({ onSendMessage }) => {
 
   const handleSend = () => {
     if (input.trim()) {
-      onSendMessage(input);
+      onSendMessage(input); // Mesaj orijinal haliyle gönderiliyor
       setInput('');
     }
   };
@@ -42,7 +42,7 @@ const ChatInput = ({ onSendMessage }) => {
         onChange={(e) => setInput(e.target.value)}
         onKeyPress={(e) => e.key === 'Enter' && handleSend()}
       />
-      <Button onClick={handleSend}>Gonder</Button>
+      <Button onClick={handleSend}>Gönder</Button>
     </InputContainer>
   );
 };
