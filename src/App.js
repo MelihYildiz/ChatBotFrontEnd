@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Chatbot from './Components/Chatbot';
 import Login from './Components/Login';
 import styled from 'styled-components';
@@ -22,6 +22,9 @@ const Header = styled.div`
 const UserName = styled.span`
   margin-right: 10px;
   font-weight: bold;
+  background-color: #fff;
+  padding: 5px;
+  border-radius: 5px;
 `;
 
 const LogoutButton = styled.button`
@@ -31,7 +34,6 @@ const LogoutButton = styled.button`
   border-radius: 5px;
   color: white;
   cursor: pointer;
-
   &:hover {
     background-color: #cc0000;
   }
@@ -41,14 +43,24 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
 
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+      setUsername(storedUsername);
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   const handleLogin = () => {
     if (username.trim()) {
+      localStorage.setItem('username', username);
       setIsLoggedIn(true);
     }
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    localStorage.removeItem('username');
     setUsername('');
   };
 
@@ -60,7 +72,7 @@ function App() {
             <UserName>{username}</UserName>
             <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
           </Header>
-          <Chatbot />
+          <Chatbot username={username} />
         </>
       ) : (
         <Login username={username} setUsername={setUsername} handleLogin={handleLogin} />
