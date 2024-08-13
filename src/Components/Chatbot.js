@@ -60,15 +60,37 @@ const Message = styled.div`
 const fetchCryptoPrices = async (currency) => {
   try {
     const response = await axios.get(`http://localhost:61756/api/crypto/${currency}`);
-    return response.data;
+    return { data: response.data, status: response.status };
   } catch (error) {
     console.error('Error fetching crypto prices:', error);
-    return null;
+    return { data: null, status: error.response ? error.response.status : 'N/A' };
   }
+};
+
+const formatPrice = (price) => {
+  return `$${price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+};
+
+const statusMessages = {
+  200: '200 OK - Başarıyla tamamlandı.',
+  201: '201 Created - Başarıyla oluşturuldu.',
+  204: '204 No Content - Başarıyla tamamlandı, ancak içerik yok.',
+  400: '400 Bad Request - Kötü istek.',
+  401: '401 Unauthorized - Yetkisiz.',
+  403: '403 Forbidden - Yasaklı.',
+  404: '404 Not Found - Bulunamadı.',
+  500: '500 Internal Server Error - Sunucu hatası.',
+  502: '502 Bad Gateway - Kötü ağ geçidi.',
+  503: '503 Service Unavailable - Hizmet kullanılabilir değil.'
+};
+
+const getStatusMessage = (status) => {
+  return statusMessages[status] || 'Bilinmeyen Durum';
 };
 
 const Chatbot = ({ username }) => {
   const [messages, setMessages] = useState([]);
+  const [inputValue, setInputValue] = useState('');
   const chatLogRef = useRef(null);
 
   useEffect(() => {
@@ -94,19 +116,30 @@ const Chatbot = ({ username }) => {
     const newMessages = [...messages, { text: message, isUser: true }];
     setMessages(newMessages);
 
-    const result = await fetchCryptoPrices(message.toUpperCase());
+    const { data, status } = await fetchCryptoPrices(message.toUpperCase());
 
-    if (result && result.price) {
+    if (data && data.price) {
+      const formattedPrice = formatPrice(parseInt(data.price.replace(/[^0-9]/g, ''), 10));
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: `Kripto Para: ${result.symbol}, Fiyat: ${result.price}`, isUser: false },
+        { 
+          text: `Kripto Para: ${data.symbol}, Fiyat: ${formattedPrice}`, 
+          isUser: false 
+        },
       ]);
     } else {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: `Hata: ${message} için geçerli bir fiyat alınamadı.`, isUser: false },
+        { text: `Hata: ${message} için geçerli bir fiyat alınamadı. HTTP Durum Kodu: ${status} (${getStatusMessage(status)})`, isUser: false },
       ]);
     }
+
+    
+    setInputValue(''); // Mesaj gönderildikten sonra textbox'ı sıfırlıyor.
+  };
+
+  const handleSelectCurrency = (currencyCode) => {
+    setInputValue(currencyCode);
   };
 
   return (
@@ -121,9 +154,13 @@ const Chatbot = ({ username }) => {
               </Message>
             ))}
           </ChatLog>
-          <ChatInput onSendMessage={handleSendMessage} />
+          <ChatInput 
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onSendMessage={() => handleSendMessage(inputValue)}
+          />
         </ChatContainer>
-        <Sidebar />
+        <Sidebar onSelectCurrency={handleSelectCurrency} />
       </ChatbotContainer>
     </Container>
   );

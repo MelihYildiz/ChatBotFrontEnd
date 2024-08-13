@@ -2,70 +2,55 @@ import React from 'react';
 import styled from 'styled-components';
 
 const SidebarContainer = styled.div`
-  width: 300px;
+  width: 250px;
+  background-color: #ffffff;
+  border-left: 1px solid #ddd;
   padding: 20px;
-  border-left: 2px solid #ccc;
-  background-color: #f4f4f4;
-  height: 90%;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  position: relative;
-  right: -10px; /* Paneli sağa kaydır */
-  top: 0;
-  border-radius: 10px 0 0 10px; /* Köşe yuvarlama */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 `;
 
-const Section = styled.div`
-  margin-bottom: 20px;
-`;
-
-const Title = styled.h2`
-  font-size: 1.2em;
-  margin-bottom: 10px;
-  color: #333;
-  font-weight: bold;
-`;
-
-const List = styled.ul`
-  list-style-type: none;
-  padding: 0;
-`;
-
-const ListItem = styled.li`
-  margin-bottom: 8px;
-  font-size: 1em;
-  color: #555;
-  border-bottom: 1px solid #ddd; /* Liste öğeleri arasında çizgi */
-  padding-bottom: 5px;
-  transition: color 0.3s, background-color 0.3s;
+const Button = styled.button`
+  background-color: #007BFF;
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
 
   &:hover {
-    color: #b31010;
-    background-color: #f1f2d3;
-    cursor: pointer;
-    border-radius: 10px
+    background-color: #0056b3;
   }
 `;
 
-const Sidebar = () => {
+const Sidebar = ({ onSelectCurrency }) => {
+  const currencies = [
+    { code: 'BTC', name: 'Bitcoin' },
+    { code: 'ETH', name: 'Ethereum' },
+    { code: 'XRP', name: 'Ripple' },
+    { code: 'SOL', name: 'Solana' },
+    { code: 'ADA', name: 'Cardano' },
+    { code: 'DOT', name: 'Polkadot' },
+    { code: 'DOGE', name: 'Doge Coin' },
+    { code: 'BNB', name: 'Binance Coin' },
+    { code: 'AVAX', name: 'Avalanche' },
+    { code: 'GT', name: 'Gate Coin' },
+    { code: 'XLM', name: 'Stellar' },
+    { code: 'YFI', name: 'Yearn.Finance' },
+
+    // Daha fazla kripto para birimi ekleyebilirsiniz
+  ];
+
   return (
     <SidebarContainer>
-      <Section>
-        <Title>Kripto Paralar</Title>
-        <List>
-          <ListItem>BTC - Bitcoin</ListItem>
-          <ListItem>ETH - Ethereum</ListItem>
-          <ListItem>LTC - Litecoin</ListItem>
-          <ListItem>BCH - Bitcoin Cash</ListItem>
-          <ListItem>BNB - Binance Coin</ListItem>
-          <ListItem>EOS - EOS</ListItem>
-          <ListItem>XRP - Ripple</ListItem>
-          <ListItem>XLM - Stellar</ListItem>
-          <ListItem>LINK - Chainlink</ListItem>
-          <ListItem>DOT - Polkadot</ListItem>
-          <ListItem>YFI - Yearn.finance</ListItem>
-        </List>
-      </Section>
-     
+      {currencies.map(currency => (
+        <Button key={currency.code} onClick={() => onSelectCurrency(currency.code)}>
+          {currency.code} - {currency.name}
+        </Button>
+      ))}
     </SidebarContainer>
   );
 };
