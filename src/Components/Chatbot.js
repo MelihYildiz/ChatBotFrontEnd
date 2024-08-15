@@ -14,8 +14,8 @@ const Container = styled.div`
 `;
 
 const ChatbotContainer = styled.div`
-  width: 1200px; /* Daha geniş bir genişlik ayarlandı */
-  height: 90%; /* Yükseklik, ekran yüksekliğinin %90'ı olarak ayarlandı */
+  width: 1200px;
+  height: 900px;
   display: flex;
   flex-direction: row;
   background-color: #ffffff;
@@ -67,6 +67,20 @@ const fetchCryptoPrices = async (currency) => {
   }
 };
 
+const addNewCurrency = async (symbol, name) => {
+  try {
+    const response = await axios.post('http://localhost:61756/api/crypto/add', {
+      symbol: symbol.toUpperCase(),
+      name: name
+    });
+    console.log('Sembol başarıyla eklendi:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Sembol eklenirken hata oluştu:', error);
+    return null;
+  }
+};
+
 const formatPrice = (price) => {
   return `$${price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
 };
@@ -91,6 +105,7 @@ const getStatusMessage = (status) => {
 const Chatbot = ({ username }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
+  const [currencies, setCurrencies] = useState([]);
   const chatLogRef = useRef(null);
 
   useEffect(() => {
@@ -116,6 +131,32 @@ const Chatbot = ({ username }) => {
     const newMessages = [...messages, { text: message, isUser: true }];
     setMessages(newMessages);
 
+    if (message.startsWith("Add ")) {
+      const parts = message.split(",");
+      if (parts.length === 2) {
+        const symbol = parts[0].split(" ")[1].trim();
+        const name = parts[1].trim();
+
+        if (symbol.length <= 4 && /^[A-Z]+$/.test(symbol)) {
+          const updatedCurrencies = await addNewCurrency(symbol, name);
+          if (updatedCurrencies) {
+            setCurrencies(updatedCurrencies);
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              { text: `Yeni sembol eklendi: ${symbol} - ${name}`, isUser: false }
+            ]);
+          }
+        } else {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { text: 'Girdi format hatalı. Lütfen "Add <symbol>, <name>" formatını kullanın.', isUser: false }
+          ]);
+        }
+        setInputValue('');
+        return;
+      }
+    }
+
     const { data, status } = await fetchCryptoPrices(message.toUpperCase());
 
     if (data && data.price) {
@@ -125,16 +166,15 @@ const Chatbot = ({ username }) => {
         { 
           text: `Kripto Para: ${data.symbol}, Fiyat: ${formattedPrice}`, 
           isUser: false 
-        },
+        }
       ]);
     } else {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: `Hata: ${message} için geçerli bir fiyat alınamadı. HTTP Durum Kodu: ${status} (${getStatusMessage(status)})`, isUser: false },
+        { text: `Hata: ${message} için geçerli bir fiyat alınamadı. HTTP Durum Kodu: ${status} (${getStatusMessage(status)})`, isUser: false }
       ]);
     }
 
-    
     setInputValue(''); // Mesaj gönderildikten sonra textbox'ı sıfırlıyor.
   };
 
@@ -160,7 +200,7 @@ const Chatbot = ({ username }) => {
             onSendMessage={() => handleSendMessage(inputValue)}
           />
         </ChatContainer>
-        <Sidebar onSelectCurrency={handleSelectCurrency} />
+        <Sidebar onSelectCurrency={handleSelectCurrency} currencies={currencies} />
       </ChatbotContainer>
     </Container>
   );

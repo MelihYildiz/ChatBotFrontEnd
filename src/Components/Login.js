@@ -33,10 +33,8 @@ const Button = styled.button`
 `;
 
 const Login = ({ username, setUsername, handleLogin }) => {
-
-  // Formun submit edilmesini sağlayan fonksiyon
   const handleSubmit = (e) => {
-    e.preventDefault(); // Sayfanın yenilenmesini engeller
+    e.preventDefault();
     handleLogin();
   };
 
@@ -49,7 +47,7 @@ const Login = ({ username, setUsername, handleLogin }) => {
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)} // Enter tuşuna basıldığında submit işlemi yapar
+          onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
         />
         <Button type="submit">Login</Button>
       </form>

@@ -1,30 +1,29 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const Container = styled.div`
+const InputContainer = styled.div`
   display: flex;
   padding: 10px;
   border-top: 1px solid #ddd;
-  background-color: #ffffff;
+  background-color: #fff;
 `;
 
-const Input = styled.input`
+const InputField = styled.input`
   flex: 1;
   padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 20px;
   margin-right: 10px;
-  font-size: 16px;
 `;
 
-const Button = styled.button`
+const SendButton = styled.button`
   padding: 10px 20px;
   border: none;
-  border-radius: 5px;
   background-color: #007BFF;
-  color: #ffffff;
-  font-size: 16px;
+  color: #fff;
+  border-radius: 20px;
   cursor: pointer;
+  font-size: 16px;
 
   &:hover {
     background-color: #0056b3;
@@ -32,24 +31,23 @@ const Button = styled.button`
 `;
 
 const ChatInput = ({ value, onChange, onSendMessage }) => {
-  const handleKeyDown = (event) => {
+  const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
-      event.preventDefault();
       onSendMessage();
     }
   };
 
   return (
-    <Container>
-      <Input 
-        type="text" 
-        value={value} 
-        onChange={onChange} 
-        onKeyDown={handleKeyDown} 
-        placeholder="Bir mesaj yazın..." 
+    <InputContainer>
+      <InputField
+        type="text"
+        value={value}
+        onChange={onChange}
+        onKeyDown={handleKeyPress}
+        placeholder="Mesajınızı yazın..."
       />
-      <Button onClick={onSendMessage}>Gönder</Button>
-    </Container>
+      <SendButton onClick={onSendMessage}>Gönder</SendButton>
+    </InputContainer>
   );
 };
 
