@@ -1,172 +1,193 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import axios from 'axios';
 
-// Styled components
-
+// Stil tanımlamaları
 const SidebarContainer = styled.div`
-  width: 250px;
-  height: 800px;
-  background-color: #f5f5f5;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  background-color: #007BFF;
+  color: #ffffff;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
   padding: 10px;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; 
-  position: relative;
 `;
 
-const SidebarTitle = styled.h2`
-  margin: 0 0 10px;
-  font-size: 18px;
-  color: #007BFF;
-  text-align: center;
-`;
-
-const ItemList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const Item = styled.div`
+const CurrencyItem = styled.div`
   padding: 10px;
-  background-color: #ffffff;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  cursor: pointer; 
+  border-bottom: 1px solid #ffffff;
+  cursor: pointer;
+  &:hover {
+    background-color: #0056b3;
+  }
 `;
 
 const AddButton = styled.button`
-  width: 100%;
-  padding: 10px;
-  background-color: #007BFF;
-  color: white;
+  background-color: #28a745;
+  color: #ffffff;
   border: none;
+  padding: 10px;
+  margin-bottom: 10px;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 16px;
-  margin-bottom: 10px;
+  &:hover {
+    background-color: #218838;
+  }
 `;
 
-const AddForm = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
-`;
-
-const TextInput = styled.input`
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-`;
-
-const Sidebar = ({ onSelectCurrency }) => {
-  const [currencies, setCurrencies] = useState([]);
-  const [showForm, setShowForm] = useState(false);
+// Yeni kripto para ekleme işlevini temsil eden bir modal veya form bileşeni
+const AddSymbolModal = ({ onAdd }) => {
   const [symbol, setSymbol] = useState('');
   const [name, setName] = useState('');
 
-  const fetchSymbols = async () => {
-    try {
-      const response = await axios.get('http://localhost:61756/api/crypto/symbols');
-      setCurrencies(response.data);
-    } catch (error) {
-      console.error('Error fetching symbols:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchSymbols();
-
-    const intervalId = setInterval(fetchSymbols, 10000);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
-  const handleAddButtonClick = () => {
-    setShowForm(!showForm);
-  };
-
   const handleSymbolChange = (e) => {
-    const value = e.target.value.toUpperCase(); 
-    setSymbol(value);
+    const value = e.target.value.toUpperCase(); // Harfleri büyük yap
+    if (value.length <= 4) {
+      setSymbol(value);
+    } else {
+      alert('Sembol 4 karakterden uzun olamaz.');
+    }
   };
 
   const handleNameChange = (e) => {
     const value = e.target.value;
-    setName(value);
-  };
-
-  const handleSymbolKeyDown = (e) => {
-    if (symbol.length >= 4 && e.key !== 'Backspace' && e.key !== 'Delete') {
-      e.preventDefault(); 
-      alert('Symbol must be up to 4 characters long.');
+    if (value.length <= 25) {
+      setName(value);
+    } else {
+      alert('İsim 25 karakterden uzun olamaz.');
     }
   };
 
-  // Name alanı için klavye olaylarını izleyen fonksiyon
-  const handleNameKeyDown = (e) => {
-    if (name.length >= 25 && e.key !== 'Backspace' && e.key !== 'Delete') {
-      e.preventDefault(); 
-      alert('Name must be up to 25 characters long.');
-    }
-  };
-
-  const handleAddCurrency = async () => {
-    if (name.length < 2) {
-      alert('Name must be at least 2 characters long.');
-      return;
-    }
-
-    try {
-      await axios.post('http://localhost:61756/api/crypto/add', {
-        symbol,
-        name
-      });
-      setShowForm(false); 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (symbol && name) {
+      onAdd({ symbol, name });
       setSymbol('');
       setName('');
-      fetchSymbols(); 
-    } catch (error) {
-      console.error('Error adding symbol:', error);
     }
   };
 
   return (
+    <form onSubmit={handleSubmit}>
+      <input 
+        type="text" 
+        placeholder="Sembol" 
+        value={symbol}
+        onChange={handleSymbolChange}
+        maxLength="4"
+        onKeyPress={(e) => {
+          if (symbol.length >= 4 && e.key !== 'Backspace' && e.key !== 'Tab') {
+            e.preventDefault();
+            alert('Sembol 4 karakterden uzun olamaz.');
+          }
+        }}
+      />
+      <input 
+        type="text" 
+        placeholder="İsim" 
+        value={name}
+        onChange={handleNameChange}
+        maxLength="25"
+        onKeyPress={(e) => {
+          if (name.length >= 25 && e.key !== 'Backspace' && e.key !== 'Tab') {
+            e.preventDefault();
+            alert('İsim 25 karakterden uzun olamaz.');
+          }
+        }}
+      />
+      <button type="submit">Ekle</button>
+    </form>
+  );
+};
+
+const Sidebar = ({ onSelectCurrency }) => {
+  const [currencies, setCurrencies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // API'den veri çekme işlevi
+  const fetchCurrencies = async () => {
+    try {
+      const response = await fetch('http://localhost:61756/api/Crypto'); // API endpoint'inizi buraya koyun
+      if (!response.ok) {
+        throw new Error('API isteği başarısız oldu.');
+      }
+      const data = await response.json();
+      setCurrencies(data);
+      setError(null); // Hata sıfırla
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Bileşen yüklendiğinde veri çekme
+  useEffect(() => {
+    const fetchInterval = async () => {
+      while (true) {
+        await fetchCurrencies();
+        await new Promise((resolve) => setTimeout(resolve, 10000)); // 10 saniye bekle
+      }
+    };
+
+    fetchInterval(); // Fonksiyonu çağır
+
+    // Bileşen unmounted olduğunda interval temizlenir
+    return () => clearInterval(fetchInterval);
+  }, []);
+
+  const handleAddCurrency = async (newCurrency) => {
+    try {
+      const response = await fetch('http://localhost:61756/api/Crypto', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCurrency),
+      });
+      if (!response.ok) {
+        throw new Error('Yeni kripto para ekleme başarısız oldu.');
+      }
+      const addedCurrency = await response.json();
+      setCurrencies([...currencies, addedCurrency]);
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  if (loading) {
+    return <SidebarContainer>Yükleniyor...</SidebarContainer>;
+  }
+
+  if (error) {
+    return <SidebarContainer>Hata: {error}</SidebarContainer>;
+  }
+
+  return (
     <SidebarContainer>
-      <SidebarTitle>Symbols</SidebarTitle>
-      <AddButton onClick={handleAddButtonClick}>
-        {showForm ? '-' : '+'} 
-      </AddButton>
-      {showForm && (
-        <AddForm>
-          <TextInput
-            type="text"
-            placeholder="Symbol (4 chars max, uppercase)"
-            value={symbol}
-            onChange={handleSymbolChange} 
-            onKeyDown={handleSymbolKeyDown} 
-          />
-          <TextInput
-            type="text"
-            placeholder="Name (2-25 chars)"
-            value={name}
-            onChange={handleNameChange} 
-            onKeyDown={handleNameKeyDown} 
-          />
-          <AddButton onClick={handleAddCurrency}>Add</AddButton> 
-        </AddForm>
+      <AddButton onClick={() => setShowAddModal(true)}>+</AddButton>
+      {showAddModal && (
+        <AddSymbolModal 
+          onAdd={(newCurrency) => {
+            handleAddCurrency(newCurrency);
+            setShowAddModal(false);
+          }} 
+        />
       )}
-      <ItemList>
-        {currencies.map((currency, index) => (
-          <Item key={index} onClick={() => onSelectCurrency(currency.symbol)}> 
+      {currencies.length > 0 ? (
+        currencies.map((currency, index) => (
+          <CurrencyItem 
+            key={index}
+            onClick={() => onSelectCurrency(currency.symbol)}
+          >
             {currency.symbol} - {currency.name}
-          </Item>
-        ))}
-      </ItemList>
+          </CurrencyItem>
+        ))
+      ) : (
+        <div>Kripto para verisi bulunamadı.</div>
+      )}
     </SidebarContainer>
   );
 };

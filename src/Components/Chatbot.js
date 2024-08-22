@@ -207,24 +207,31 @@ const Chatbot = ({ username }) => {
       }
     }
 
-    // Kripto para fiyatını getirir ve kullanıcıya gösterir
-    const { data, status } = await fetchCryptoPrices(message.toUpperCase());
+// Kripto para fiyatını getirir ve kullanıcıya gösterir
+const { data, status } = await fetchCryptoPrices(message.toUpperCase());
 
-    if (data && data.price) {
-      const formattedPrice = formatPrice(parseInt(data.price.replace(/[^0-9]/g, ''), 10));
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { 
-          text: `Kripto Para: ${data.symbol}, Fiyat: ${formattedPrice}`, 
-          isUser: false 
-        }
-      ]);
-    } else {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: `Hata: ${message} için geçerli bir fiyat alınamadı. HTTP Durum Kodu: ${status} (${getStatusMessage(status)})`, isUser: false }
-      ]);
+if (data && data.price) {
+  // data.price'i string'e dönüştür
+  const priceString = data.price.toString();
+  
+  // Fiyatı işleyin ve formatlayın
+  const cleanedPrice = priceString.replace(/[^0-9]/g, '');
+  const formattedPrice = formatPrice(parseInt(cleanedPrice, 10));
+
+  setMessages((prevMessages) => [
+    ...prevMessages,
+    { 
+      text: `Kripto Para: ${data.symbol}, Fiyat: ${formattedPrice}`, 
+      isUser: false 
     }
+  ]);
+} else {
+  setMessages((prevMessages) => [
+    ...prevMessages,
+    { text: `Hata: ${message} için geçerli bir fiyat alınamadı. HTTP Durum Kodu: ${status} (${getStatusMessage(status)})`, isUser: false }
+  ]);
+}
+
 
     setInputValue(''); // Mesaj gönderildikten sonra input alanını sıfırlar
   };
@@ -233,8 +240,6 @@ const Chatbot = ({ username }) => {
   const handleSelectCurrency = (currencyCode) => {
     setInputValue(currencyCode);
   };
-
-  
 
   return (
     <Container>
@@ -251,10 +256,13 @@ const Chatbot = ({ username }) => {
           <ChatInput 
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onSendMessage={() => handleSendMessage(inputValue)}
+            onSend={() => handleSendMessage(inputValue)}
           />
         </ChatContainer>
-        <Sidebar currencies={currencies} onSelectCurrency={handleSelectCurrency} />
+        <Sidebar 
+          currencies={currencies} 
+          onSelectCurrency={handleSelectCurrency}
+        />
       </ChatbotContainer>
     </Container>
   );
