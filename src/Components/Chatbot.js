@@ -14,6 +14,14 @@ const Container = styled.div`
   background-color: #f5f5f5;
 `;
 
+const Logo = styled.img`
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 150px; /* Logo genişliği */
+  height: auto; /* Logo yüksekliğini otomatik ayarla */
+`;
+
 const ChatbotContainer = styled.div`
   width: 1200px;
   height: 820px;
@@ -28,6 +36,7 @@ const ChatContainer = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
+
 `;
 
 const Header = styled.h1`
@@ -36,8 +45,9 @@ const Header = styled.h1`
   background-color: #007BFF;
   color: #ffffff;
   border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
+  border-top-right-radius: 0px;
   text-align: center;
+  text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const ChatLog = styled.div`
@@ -46,16 +56,18 @@ const ChatLog = styled.div`
   overflow-y: auto;
   border-bottom: 1px solid #ddd;
   background-color: #f9f9f9;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const Message = styled.div`
   margin-bottom: 15px;
   padding: 15px;
-  background-color: ${props => (props.isUser ? '#DCF8C6' : '#ffffff')};
+  background-color: ${props => (props.isUser ? '#DCF8C6' : '#z')};
   align-self: ${props => (props.isUser ? 'flex-end' : 'flex-start')};
-  border-radius: 20px;
-  max-width: 60%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: ${props =>
+    props.isUser ? '20px 0 20px 0' : '0 20px 0 20px'};
+  max-width: 90%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 // Fiyatı belirli bir formatta gösterir
@@ -120,12 +132,13 @@ const addNewCurrency = async (symbol, name) => {
 // Sembol bazında kripto fiyatlarını alır
 const fetchCryptoPrices = async (symbol) => {
   try {
-    const { data, status } = await axios.get(`http://localhost:61756/api/crypto/${symbol}`);
-    if (status === 200) {
-      return { data, status };
+    const response = await axios.get(`http://localhost:61756/api/crypto/${symbol}`);
+    console.log('API Yanıtı:', response); // Yanıtı günlüğe kaydedin
+    if (response.status === 200) {
+      return { data: response.data, status: response.status };
     }
-    console.error('Failed to fetch crypto prices:', getStatusMessage(status));
-    return { data: null, status };
+    console.error('Failed to fetch crypto prices:', getStatusMessage(response.status));
+    return { data: null, status: response.status };
   } catch (error) {
     console.error('Failed to fetch crypto prices:', error.message);
     return { data: null, status: error.response?.status || 500 };
@@ -136,7 +149,7 @@ const Chatbot = ({ username }) => {
   const [messages, setMessages] = useState([]); // Mesajları tutar
   const [inputValue, setInputValue] = useState(''); // Input alanındaki değeri tutar
   const [currencies, setCurrencies] = useState([]); // Sembolleri tutar
-  const chatLogRef = useRef(null); // Chat log referansı
+  const chatLogRef = useRef(null);
 
   // Kullanıcının önceki mesajlarını localStorage'dan yükler
   useEffect(() => {
@@ -174,64 +187,27 @@ const Chatbot = ({ username }) => {
     const newMessages = [...messages, { text: message, isUser: true }];
     setMessages(newMessages);
 
-    // Yeni sembol ekleme komutunu kontrol eder
-    if (message.startsWith("Add ")) {
-      const parts = message.split(",");
-      if (parts.length === 2) {
-        const symbol = parts[0].split(" ")[1].trim();
-        const name = parts[1].trim();
+    // Kripto para fiyatını getirir ve kullanıcıya gösterir
+    const { data, status } = await fetchCryptoPrices(message.toUpperCase());
 
-        // Sembolün geçerli formatta olup olmadığını kontrol eder
-        if (symbol.length <= 4 && /^[A-Z]+$/.test(symbol)) {
-          const updatedCurrencies = await addNewCurrency(symbol, name);
-          if (updatedCurrencies) {
-            setCurrencies(updatedCurrencies);
-            setMessages((prevMessages) => [
-              ...prevMessages,
-              { text: `Yeni sembol eklendi: ${symbol} - ${name}`, isUser: false }
-            ]);
-          } else {
-            setMessages((prevMessages) => [
-              ...prevMessages,
-              { text: 'Yeni sembol eklenemedi.', isUser: false }
-            ]);
-          }
-        } else {
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            { text: 'Girdi format hatalı. Lütfen "Add <symbol>, <name>" formatını kullanın.', isUser: false }
-          ]);
+    if (data && data.price !== undefined && data.symbol && data.price >= 0) {
+      const priceString = data.price.toString();
+      const cleanedPrice = priceString.replace(/[^0-9]/g, '');
+      const formattedPrice = formatPrice(parseInt(cleanedPrice, 10));
+
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { 
+          text: `Kripto Para: ${data.symbol.trim()}, Fiyat: ${formattedPrice}`, 
+          isUser: false 
         }
-        setInputValue('');
-        return;
-      }
+      ]);
+    } else {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: `Hata: ${message} için geçerli bir fiyat alınamadı. HTTP Durum Kodu: ${status} (${getStatusMessage(status)})`, isUser: false }
+      ]);
     }
-
-// Kripto para fiyatını getirir ve kullanıcıya gösterir
-const { data, status } = await fetchCryptoPrices(message.toUpperCase());
-
-if (data && data.price) {
-  // data.price'i string'e dönüştür
-  const priceString = data.price.toString();
-  
-  // Fiyatı işleyin ve formatlayın
-  const cleanedPrice = priceString.replace(/[^0-9]/g, '');
-  const formattedPrice = formatPrice(parseInt(cleanedPrice, 10));
-
-  setMessages((prevMessages) => [
-    ...prevMessages,
-    { 
-      text: `Kripto Para: ${data.symbol}, Fiyat: ${formattedPrice}`, 
-      isUser: false 
-    }
-  ]);
-} else {
-  setMessages((prevMessages) => [
-    ...prevMessages,
-    { text: `Hata: ${message} için geçerli bir fiyat alınamadı. HTTP Durum Kodu: ${status} (${getStatusMessage(status)})`, isUser: false }
-  ]);
-}
-
 
     setInputValue(''); // Mesaj gönderildikten sonra input alanını sıfırlar
   };
@@ -243,6 +219,7 @@ if (data && data.price) {
 
   return (
     <Container>
+      <Logo src="/logo.png" alt="Logo" />
       <ChatbotContainer>
         <ChatContainer>
           <Header>ChatBot</Header>

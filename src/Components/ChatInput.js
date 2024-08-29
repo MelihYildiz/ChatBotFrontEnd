@@ -17,22 +17,27 @@ const InputField = styled.input`
   border: 1px solid #ddd;
   border-radius: 20px;
   outline: none;
+  
 `;
 
 const SendButton = styled.button`
-  background-color: #007BFF;
-  color: #ffffff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  margin-left: 10px;
+  background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.8s;
+
   &:hover {
-    background-color: #0056b3;
+    background-color: #ADFF2F;
+   
   }
 `;
 
+// ChatInput bileşeni
 const ChatInput = ({ value, onChange, onSend }) => {
+  // Enter tuşuna basıldığında mesajı gönder
   const handleKeyPress = (event) => {
     if (event.key === 'Enter') {
       onSend();

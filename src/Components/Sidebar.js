@@ -23,15 +23,16 @@ const CurrencyItem = styled.div`
 `;
 
 const AddButton = styled.button`
-  background-color: #28a745;
+  background-color: #007BFF;
   color: #ffffff;
-  border: none;
+  border: 1px solid #ffffff;
   padding: 10px;
   margin-bottom: 10px;
-  border-radius: 5px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   &:hover {
-    background-color: #218838;
+    background-color: #17D5FF;
   }
 `;
 
@@ -40,6 +41,7 @@ const AddSymbolModal = ({ onAdd }) => {
   const [symbol, setSymbol] = useState('');
   const [name, setName] = useState('');
 
+  // Sembolün değişimini işler
   const handleSymbolChange = (e) => {
     const value = e.target.value.toUpperCase(); // Harfleri büyük yap
     if (value.length <= 4) {
@@ -49,6 +51,7 @@ const AddSymbolModal = ({ onAdd }) => {
     }
   };
 
+  // İsmlerin değişimini işler
   const handleNameChange = (e) => {
     const value = e.target.value;
     if (value.length <= 25) {
@@ -58,6 +61,7 @@ const AddSymbolModal = ({ onAdd }) => {
     }
   };
 
+  // Formu gönderme işlemi
   const handleSubmit = (e) => {
     e.preventDefault();
     if (symbol && name) {
@@ -109,13 +113,13 @@ const Sidebar = ({ onSelectCurrency }) => {
   // API'den veri çekme işlevi
   const fetchCurrencies = async () => {
     try {
-      const response = await fetch('http://localhost:61756/api/Crypto'); // API endpoint'inizi buraya koyun
+      const response = await fetch('http://localhost:61756/api/Crypto');
       if (!response.ok) {
         throw new Error('API isteği başarısız oldu.');
       }
       const data = await response.json();
       setCurrencies(data);
-      setError(null); // Hata sıfırla
+      setError(null); 
     } catch (error) {
       setError(error.message);
     } finally {
@@ -138,6 +142,7 @@ const Sidebar = ({ onSelectCurrency }) => {
     return () => clearInterval(fetchInterval);
   }, []);
 
+  // Yeni bir kripto para ekler
   const handleAddCurrency = async (newCurrency) => {
     try {
       const response = await fetch('http://localhost:61756/api/Crypto', {
